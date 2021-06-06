@@ -1,12 +1,13 @@
 from datetime import datetime, timezone, timedelta
 import requests
 import os
-
+import re
 
 PUSH_KEY = os.getenv("PUSH_KEY")
 KEY_WORD = '上海'
 RK_URL = "https://bm.ruankao.org.cn/sign/welcome"
-
+CJ_URL = "https://www.ruankao.org.cn/index/work"
+CJ_KEY_WORD = r"2021年.*成绩"
 
 def get_session(_url):
     _session = requests.Session()
@@ -23,6 +24,11 @@ def rk_status():
 
     return 1 if KEY_WORD in _content else 0
 
+def cj_status():
+    _content = get_session(CJ_URL)
+    p = re.compile(CJ_KEY_WORD)
+
+    return 1 if len(p.findall(_content)) else 0
 
 def notify(_title, _message=None):
     if not PUSH_KEY:
@@ -46,10 +52,11 @@ def main():
     today = datetime.now(_tz).strftime("%Y-%m-%d")
     print(datetime.now(_tz).strftime("%Y-%m-%d %H:%M"))
 
-    if rk_status():
-        notify("上海软考报名开启提示", "已开启报名通道")
+    if cj_status():
+        print("上海软考成绩已出")
+        notify("上海软考成绩已出", "已开启成绩查询通道")
     else:
-        print("上海软考报名尚未开启")
+        print("上海软考成绩未出")
 
 
 if __name__ == "__main__":
